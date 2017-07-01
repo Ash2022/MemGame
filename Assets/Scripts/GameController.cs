@@ -12,10 +12,13 @@ public class GameController : MonoBehaviour {
 	bool			m_last_pick_won;
 	bool			m_human_can_play;
 
-	const float 	CARDS_PICK_DELAY_TIME = 0.5f;
+	const float 	CARDS_PICK_DELAY_TIME = 1.5f;
 	const int 		MATCH_SCORE = 100;
 	const int 		FIRST_SCORE = 200;
-	const int		TURN_TIME = 5;
+	const int		TURN_TIME = 15;
+
+	public const int 		UNKNOWN = -1;
+	public const int 		MATCHED = -100;
 
 	List<int> 		m_human_picked_cards_indexes = new List<int> ();
 
@@ -61,7 +64,7 @@ public class GameController : MonoBehaviour {
 
 		if (ManagerView.Instance.Num_of_matches_needed != m_curr_num_matches) {
 
-			if (ManagerView.Instance.Players_views [m_curr_player].Bot) {
+			if (ManagerView.Instance.Players_views [m_curr_player].Bot!=null) {
 				StartCoroutine (GenerateAndPlayBotMove (ManagerView.Instance.Cards_to_match));
 			}
 			else {
@@ -92,7 +95,7 @@ public class GameController : MonoBehaviour {
 
 		float f_start_time = Time.realtimeSinceStartup;
 
-		while ((Time.realtimeSinceStartup<f_start_time+TURN_TIME)&&(time_expired==false))
+		while ((Time.realtimeSinceStartup<f_start_time+TURN_TIME)&&(time_expired==false)&&(m_num_picked_cards != ManagerView.Instance.Cards_to_match))
 		{
 			float temp = (Time.realtimeSinceStartup - f_start_time) / TURN_TIME;
 
@@ -170,9 +173,23 @@ public class GameController : MonoBehaviour {
 
 		player_view.ShowHideTimer (false);
 
+
+
 		List<int> 		picked_cards_indexes = new List<int> ();
 
-		int first_picked_card = Random.Range (0, ManagerView.Instance.Cards_views.Count);
+		picked_cards_indexes = player_view.Bot.GetGeneratedPicks (num_cards_to_pick);
+
+		/*
+		List<int> possible_to_pick = new List<int> ();
+
+		for (int i = 0; i < ManagerView.Instance.Card_views_arr.Length; i++)
+			if (ManagerView.Instance.Card_views_arr [i].Pos_index != MATCHED)
+				possible_to_pick.Add (ManagerView.Instance.Card_views_arr [i].Pos_index);
+		
+
+		int first_picked_card_index = Random.Range (0, possible_to_pick.Count);
+
+		int first_picked_card = possible_to_pick [first_picked_card_index];
 
 		for (int i = 0; i < num_cards_to_pick; i++)
 			picked_cards_indexes.Add (first_picked_card);
@@ -183,7 +200,8 @@ public class GameController : MonoBehaviour {
 
 			done = true;
 			for (int i = 1; i < picked_cards_indexes.Count; i++) {
-				picked_cards_indexes[i] = Random.Range (0, ManagerView.Instance.Cards_views.Count);
+				int temp = Random.Range (0, possible_to_pick.Count);
+				picked_cards_indexes[i] = possible_to_pick [temp];
 			}
 
 			for (int i = 0; i < picked_cards_indexes.Count; i++) {
@@ -198,11 +216,11 @@ public class GameController : MonoBehaviour {
 			}
 
 		}
-
-		for (int i = 0; i < picked_cards_indexes.Count; i++) {
+*/
+		for (int i = 0; i <picked_cards_indexes.Count; i++) {
 
 			Debug.Log (picked_cards_indexes [i]);
-			ManagerView.Instance.Cards_views [picked_cards_indexes[i]].ShowCard (true);
+			ManagerView.Instance.Card_views_arr [picked_cards_indexes[i]].ShowCard (true);
 
 			yield return new WaitForSecondsRealtime (CARDS_PICK_DELAY_TIME);
 		}
@@ -243,12 +261,12 @@ public class GameController : MonoBehaviour {
 
 	private bool CheckCurrentSelectionMatch(List<int> picked_cards_indexes)
 	{
-		int first_card_value = ManagerView.Instance.Cards_views[picked_cards_indexes[0]].Image_index;
+		int first_card_value = ManagerView.Instance.Card_views_arr[picked_cards_indexes[0]].Image_index;
 		bool match = true;
 
 
 		for (int i = 1; i < picked_cards_indexes.Count; i++) {
-			if (ManagerView.Instance.Cards_views [picked_cards_indexes[i]].Image_index != first_card_value)
+			if (ManagerView.Instance.Card_views_arr [picked_cards_indexes[i]].Image_index != first_card_value)
 				match = false;
 		}
 
@@ -277,7 +295,13 @@ public class GameController : MonoBehaviour {
 
 
 			for (int i = 0; i < picked_cards_indexes.Count; i++) {
-				ManagerView.Instance.Cards_views.RemoveAt (picked_cards_indexes [i]);
+				ManagerView.Instance.Card_views_arr[picked_cards_indexes [i]].Pos_index = MATCHED;
+
+				for (int k=0;k<ManagerView.Instance.Players_views.Count;k++)
+				{
+					if (ManagerView.Instance.Players_views [k].Bot != null)
+						ManagerView.Instance.Players_views [k].Bot.AddDataFromOtherPlayerMoves (picked_cards_indexes [i], MATCHED);
+				}
 			}
 
 
@@ -286,7 +310,14 @@ public class GameController : MonoBehaviour {
 		{
 			Debug.Log ("No Match - Closing Cards");
 			for (int i = 0; i < picked_cards_indexes.Count; i++) {
-				ManagerView.Instance.Cards_views[picked_cards_indexes [i]].ShowCard(false);
+				ManagerView.Instance.Card_views_arr[picked_cards_indexes [i]].ShowCard(false);
+
+
+				for (int k=0;k<ManagerView.Instance.Players_views.Count;k++)
+				{
+					if (ManagerView.Instance.Players_views [k].Bot != null)
+						ManagerView.Instance.Players_views [k].Bot.AddDataFromOtherPlayerMoves (picked_cards_indexes [i], ManagerView.Instance.Card_views_arr[picked_cards_indexes [i]].Image_index);
+				}
 			}
 		}
 

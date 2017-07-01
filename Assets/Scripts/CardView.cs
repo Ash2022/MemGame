@@ -19,7 +19,7 @@ public class CardView : MonoBehaviour {
 	{
 		m_image_index = image_index;
 		m_pos_index = pos_index;
-		m_row_ol_indicator.text = "p" + m_pos_index;
+		m_row_ol_indicator.text = m_pos_index.ToString();
 
 
 	}
@@ -50,6 +50,9 @@ public class CardView : MonoBehaviour {
 	public int Pos_index {
 		get {
 			return m_pos_index;
+		}
+		set{
+			m_pos_index = value;
 		}
 	}
 

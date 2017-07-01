@@ -35,7 +35,7 @@ public class ManagerView : MonoBehaviour {
 	int								m_num_of_matches_needed;
 
 	List<PlayerView>				m_players_views = new List<PlayerView> ();
-	List<CardView>					m_cards_views = new List<CardView> ();
+	CardView[]						m_card_views_arr;
 
 	Vector3[]						m_player_pos = new Vector3[4];
 
@@ -137,7 +137,8 @@ public class ManagerView : MonoBehaviour {
 
 		}
 
-		m_cards_views.Clear ();
+		m_card_views_arr = new CardView[m_rows * m_columns];
+
 		m_players_views.Clear ();
 	}
 
@@ -163,7 +164,8 @@ public class ManagerView : MonoBehaviour {
 
 				CardView cv = G.GetComponent<CardView> ();
 
-				m_cards_views.Add (cv);
+
+				m_card_views_arr  [m_rows*i+ j] = cv;
 			}
 		}
 
@@ -202,7 +204,8 @@ public class ManagerView : MonoBehaviour {
 
 		for (i = 0; i < aux_deck.Count; i++) {
 			
-			m_cards_views [i].SetCard (aux_deck [i],i);
+
+			m_card_views_arr[i].SetCard(aux_deck[i],i);
 
 		}
 
@@ -221,7 +224,7 @@ public class ManagerView : MonoBehaviour {
 			new_player.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.South];
 			PlayerView pv = new_player.GetComponent<PlayerView>();
-			pv.SetPlayer ((int)Player_Postions.South,false);
+			pv.SetPlayer ((int)Player_Postions.South,null);
 			m_players_views.Add (pv);
 
 			GameObject new_player2 = (GameObject)Instantiate(m_player_prefab);
@@ -230,18 +233,92 @@ public class ManagerView : MonoBehaviour {
 			new_player2.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player2.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.North];
 			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
-			pv2.SetPlayer ((int)Player_Postions.North,true);
+			Bot bot = new Bot ();
+			bot.SetBot (m_rows * m_columns, 0.75f);
+			pv2.SetPlayer ((int)Player_Postions.North,bot);
 			m_players_views.Add (pv2);
 
 
 		} else if (m_num_players == 3) {
 			//make south and east west
+			//in this case we make a north south
+			GameObject new_player = (GameObject)Instantiate(m_player_prefab);
+
+			new_player.transform.SetParent(m_players_holder);
+			new_player.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
+			new_player.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.South];
+			PlayerView pv = new_player.GetComponent<PlayerView>();
+			pv.SetPlayer ((int)Player_Postions.South,null);
+			m_players_views.Add (pv);
+
+			GameObject new_player2 = (GameObject)Instantiate(m_player_prefab);
+
+			new_player2.transform.SetParent(m_players_holder);
+			new_player2.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
+			new_player2.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.West];
+			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
+			Bot bot2 = new Bot ();
+			bot2.SetBot (m_rows * m_columns, 0.75f);
+			pv2.SetPlayer ((int)Player_Postions.West,bot2);
+			m_players_views.Add (pv2);
+
+			GameObject new_player3 = (GameObject)Instantiate(m_player_prefab);
+
+			new_player3.transform.SetParent(m_players_holder);
+			new_player3.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
+			new_player3.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.East];
+			PlayerView pv3 = new_player3.GetComponent<PlayerView>();
+			Bot bot3 = new Bot ();
+			bot3.SetBot (m_rows * m_columns, 0.75f);
+			pv3.SetPlayer ((int)Player_Postions.East,bot3);
+			m_players_views.Add (pv3);
+
 
 		} else if (m_num_players == 4) {
 
+			GameObject new_player = (GameObject)Instantiate(m_player_prefab);
+
+			new_player.transform.SetParent(m_players_holder);
+			new_player.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
+			new_player.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.South];
+			PlayerView pv = new_player.GetComponent<PlayerView>();
+			pv.SetPlayer ((int)Player_Postions.South,null);
+			m_players_views.Add (pv);
+
+			GameObject new_player2 = (GameObject)Instantiate(m_player_prefab);
+
+			new_player2.transform.SetParent(m_players_holder);
+			new_player2.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
+			new_player2.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.West];
+			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
+			Bot bot2 = new Bot ();
+			bot2.SetBot (m_rows * m_columns, 0.75f);
+			pv2.SetPlayer ((int)Player_Postions.West,bot2);
+			m_players_views.Add (pv2);
+
+			GameObject new_player3 = (GameObject)Instantiate(m_player_prefab);
+
+			new_player3.transform.SetParent(m_players_holder);
+			new_player3.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
+			new_player3.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.North];
+			PlayerView pv3 = new_player3.GetComponent<PlayerView>();
+			Bot bot3 = new Bot ();
+			bot3.SetBot (m_rows * m_columns, 0.75f);
+			pv3.SetPlayer ((int)Player_Postions.North,bot3);
+			m_players_views.Add (pv3);
+
+			GameObject new_player4 = (GameObject)Instantiate(m_player_prefab);
+
+			new_player4.transform.SetParent(m_players_holder);
+			new_player4.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
+			new_player4.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.East];
+			PlayerView pv4 = new_player4.GetComponent<PlayerView>();
+			Bot bot4 = new Bot ();
+			bot4.SetBot (m_rows * m_columns, 0.75f);
+			pv4.SetPlayer ((int)Player_Postions.East,bot4);
+			m_players_views.Add (pv4);
+
 		}
-
-
 
 
 	}
@@ -264,9 +341,11 @@ public class ManagerView : MonoBehaviour {
 		}
 	}
 
-	public List<CardView> Cards_views {
+
+
+	public CardView[] Card_views_arr {
 		get {
-			return m_cards_views;
+			return m_card_views_arr;
 		}
 	}
 

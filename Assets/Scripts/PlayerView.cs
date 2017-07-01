@@ -8,12 +8,13 @@ public class PlayerView : MonoBehaviour {
 	[SerializeField]Image	m_bg_image=null;
 	int						m_player_image_index;
 	[SerializeField]Image	m_timer=null;
-	bool 					m_bot;
+	Bot 					m_bot;
 	int						m_score;
 	int						m_multi;
 	[SerializeField]Text	m_score_text;
 
-	public void SetPlayer(int index,bool bot, int score=0)
+
+	public void SetPlayer(int index,Bot bot, int score=0)
 	{
 		m_player_image_index = index;
 		m_bot = bot;
@@ -39,7 +40,7 @@ public class PlayerView : MonoBehaviour {
 	}
 
 
-	public bool Bot {
+	public Bot Bot {
 		get {
 			return m_bot;
 		}
