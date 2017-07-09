@@ -6,23 +6,34 @@ public class Bot
 {
 
 
-	float m_chance_to_forget;
-	int[] m_cards;
-	int[] m_discovery_time;
-	int m_discovery_index;
 
-	public void SetBot (int num_slots, float chance)
+	int[] 		m_cards;
+	int[] 		m_cards_remember;
+	int[] 		m_discovery_time;
+	int 		m_discovery_index;
+
+	ManagerView.BotLevel	m_bot_level;
+
+	BotMemory	m_memory;
+
+
+	public void SetBot (int num_slots, ManagerView.BotLevel bot_level )
 	{
 		m_cards = new int[num_slots];
+		m_cards_remember = new int[num_slots];
 		m_discovery_time = new int[num_slots];
 
 		m_discovery_index = 0;
 
-		for (int i = 0; i < num_slots; i++)
+		for (int i = 0; i < num_slots; i++) {
 			m_cards [i] = GameController.UNKNOWN;
-		
+			m_cards_remember [i] = 0;
+		}
 
-		m_chance_to_forget = chance;
+		m_bot_level = bot_level;
+
+		m_memory = ManagerView.Instance.Bots[(int)bot_level];
+
 	}
 
 	private int	GetFirstIndexOfMatch (int num_picks)
@@ -57,8 +68,25 @@ public class Bot
 		return match_found_first_index;
 	}
 
+	public void HighlightAllKnownCards(bool show)
+	{
+		if (show) {
+			for (int i = 0; i < m_cards.Length; i++)
+				if (m_cards [i] != GameController.UNKNOWN && m_cards [i] != GameController.MATCHED)
+					ManagerView.Instance.Card_views_arr [i].HighLight (true);
+		} else {
+
+			for (int i = 0; i < m_cards.Length; i++)
+				ManagerView.Instance.Card_views_arr [i].HighLight (false);
+		}
+
+
+	}
+
 	public List<int> GetGeneratedPicks (int num_picks)
 	{
+		
+
 		List<int> picks = new List<int> ();
 		List<int> possible_to_pick = new List<int> ();
 
@@ -72,6 +100,11 @@ public class Bot
 			for (int i = 0; i < m_cards.Length; i++)
 				if (m_cards [i] == picked_value)
 					possible_to_pick.Add (i);
+
+			if (possible_to_pick.Count == num_picks) {
+				Debug.Log ("Bot "+ Bot_level+" remembered pick");
+			}
+
 		} else {
 
 
@@ -81,18 +114,11 @@ public class Bot
 					possible_to_pick.Add (i);
 
 
-			if (possible_to_pick.Count == 0) {
-				Debug.Log ("ERRRRRRRRRRROR in bot logic - doesnt find a match and doesnt have any unknown cards!!!!");
+			if (possible_to_pick.Count == 0) { //can happen in some cases
+				for (int i = 0; i < m_cards.Length; i++)
+						possible_to_pick.Add (i);
 			}
 		}
-
-
-
-		//need to make better - first see if you have in the list num_picks cards that you know their value - if so pick them
-
-		// if dont have - try to see if there are still Unknown cards - pick them - after you pick a first unknown - check to see if you know the others - and if so pick - if not try another Unknown.
-
-
 
 		int first_picked_card_index = Random.Range (0, possible_to_pick.Count);
 
@@ -164,15 +190,64 @@ public class Bot
 			}
 		}
 
+
+
 		return picks;
 	}
 
-	public void AddDataFromOtherPlayerMoves (int	pick_index, int value)
+	public void AddDataFromOtherPlayerMoves (int pick_index, int value)
 	{
 		m_cards [pick_index] = value;
+		m_cards_remember [pick_index] = 1;
 
 		m_discovery_time [pick_index] = m_discovery_index;
 		m_discovery_index++;
+
+		UpdateRememberCards ();
 	}
 
+	private void UpdateRememberCards()
+	{
+		int num_cards = m_cards_remember.Length;
+
+		for (int i = 0; i < num_cards; i++) {
+
+			if (m_cards_remember [i] > 0)
+				m_cards_remember [i]++;
+		}
+
+		//increase number of turns since card was shown
+
+		//calculate if player forgot a card
+		for (int i = 0; i < num_cards; i++) {
+
+			int entry_value = m_cards_remember [i];
+
+			int curr_mem_value = m_memory.Initial_memory - entry_value * m_memory.Decline_rate;
+
+			if (curr_mem_value < Random.Range (0, 70)) {//bot forgot value
+
+				m_cards_remember [i] = 0;
+
+			}
+		}
+
+
+		//go over all the memory - and if there are 0 - need to delete the entry in the m_cards;
+
+		for (int i = 0; i < num_cards; i++) {
+
+			if (m_cards_remember [i] == 0)
+
+			if(m_cards[i]!=GameController.MATCHED)
+				m_cards [i] = GameController.UNKNOWN;
+		}
+
+	}
+
+	public ManagerView.BotLevel Bot_level {
+		get {
+			return m_bot_level;
+		}
+	}
 }

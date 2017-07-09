@@ -1,9 +1,20 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class ManagerView : MonoBehaviour {
 
+	public enum BotLevel
+	{
+		Geniuos,
+		smart,
+		medium,
+		lame,
+		retard
+	}
+
+	List<BotMemory>	m_bots = new List<BotMemory> ();
 	[SerializeField]GameObject		m_player_prefab=null;
 	[SerializeField]GameObject		m_card_prefab=null;
 
@@ -15,13 +26,13 @@ public class ManagerView : MonoBehaviour {
 	[SerializeField]Sprite[]		m_cards_images=null;
 	[SerializeField]Sprite[]		m_avatars_images=null;
 
-	public const	int				PLAYER_X_OFFSET = 450;
-	public const	int				PLAYER_Y_OFFSET = 700;
+	public const	int				PLAYER_X_OFFSET = 250;
+	public const	int				PLAYER_Y_OFFSET = 750;
 
 	public const	int				CARD_X_SPACE = 10;
 	public const	int				CARD_Y_SPACE = 10;
 
-	public const 	int 			CARD_WIDTH = 128;
+	public const 	int 			CARD_WIDTH = 160;
 
 	float							m_table_width=0;
 	float							m_table_height=0;
@@ -32,7 +43,12 @@ public class ManagerView : MonoBehaviour {
 	[SerializeField]int				m_cards_to_match=2;
 	[SerializeField]int				m_num_players=2;
 	[SerializeField]bool			m_winner_plays_on=true;
+	[SerializeField]int				m_num_human_players=1;
+
 	int								m_num_of_matches_needed;
+
+
+	[SerializeField]GameObject		m_selection_gui=null;
 
 	List<PlayerView>				m_players_views = new List<PlayerView> ();
 	CardView[]						m_card_views_arr;
@@ -91,32 +107,109 @@ public class ManagerView : MonoBehaviour {
 		}
 	}
 
+	private void GenerateBots()
+	{
+		m_bots.Add (new BotMemory (100, 0)); // never forget
+		m_bots.Add (new BotMemory (90, 1));
+		m_bots.Add (new BotMemory (70, 2));
+		m_bots.Add (new BotMemory (60, 2)); 
+		m_bots.Add (new BotMemory (50, 3)); // never remember
+
+	}
+
+	public void NumRowsChanged(string newText)
+	{
+		m_rows = Convert.ToInt32 (newText);
+	}
+	public void NumColsChanged(string newText)
+	{
+		m_columns = Convert.ToInt32 (newText);
+	}
+	public void NumMatchChanged(string newText)
+	{
+		m_cards_to_match = Convert.ToInt32 (newText);
+	}
+	public void NumPlayersChanged(string newText)
+	{
+		m_num_players = Convert.ToInt32 (newText);
+	}
+	public void NumHumanPlayersChanged(string newText)
+	{
+		m_num_human_players = Convert.ToInt32 (newText);
+	}
+	public void NumWinnerChanged(string newText)
+	{
+		if (Convert.ToInt32 (newText) == 0)
+			m_winner_plays_on = false;
+		else
+			m_winner_plays_on = true;
+	}
+
+
 	void Update()
 	{
-		if(Input.GetKeyUp(KeyCode.G))
-			BuildTable();
+		if (Input.GetKeyUp (KeyCode.G))
+			StartCoroutine(ShowAllCards());
 	}
+
+	public IEnumerator ShowAllCards()
+	{
+		for (int i = 0; i < m_card_views_arr.Length; i++) {
+			m_card_views_arr [i].ShowCard (true);
+			yield return new WaitForSecondsRealtime (0.03f);
+		}
+
+		yield return new WaitForSecondsRealtime (0.13f);
+
+		for (int i = 0; i < m_card_views_arr.Length; i++) {
+			m_card_views_arr [i].ShowCard (false);
+			yield return new WaitForSecondsRealtime (0.03f);
+		}
+
+	}
+
+
 
 	private void Init()
 	{
-		m_player_pos [(int)Player_Postions.South] = new Vector3 (0, -PLAYER_Y_OFFSET, 0);
-		m_player_pos [(int)Player_Postions.West] = new Vector3 (-PLAYER_X_OFFSET, 0, 0);
-		m_player_pos [(int)Player_Postions.North] = new Vector3 (0, PLAYER_Y_OFFSET, 0);
-		m_player_pos [(int)Player_Postions.East] = new Vector3 (PLAYER_X_OFFSET, 0, 0);
+		GenerateBots ();
+
+		m_player_pos [(int)Player_Postions.South] = new Vector3 (-PLAYER_X_OFFSET, -PLAYER_Y_OFFSET, 0);
+		m_player_pos [(int)Player_Postions.West] = new Vector3 (-PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 0);
+		m_player_pos [(int)Player_Postions.North] = new Vector3 (PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 0);
+		m_player_pos [(int)Player_Postions.East] = new Vector3 (PLAYER_X_OFFSET, -PLAYER_Y_OFFSET, 0);
 
 		m_table_width = m_table.rect.width;
 		m_table_height = m_table.rect.height;
 
-		m_num_of_matches_needed = m_rows * m_columns / 2;
+
 
 	}
 	void Start()
 	{
 		Init ();
+		ShowSelectionGui ();
+	}
+
+	public void ShowSelectionGui()
+	{
+		m_selection_gui.SetActive (true);
+	}
+
+	public void StartButtonClicked()
+	{
+		StopAllCoroutines ();
+		BuildTable ();
 	}
 
 	private void BuildTable()
 	{
+		m_num_of_matches_needed = m_rows * m_columns / m_cards_to_match;
+
+		if (m_cards_to_match == 2 || m_cards_to_match == 3)
+			m_num_of_matches_needed--;
+
+		m_selection_gui.SetActive (false);
 		ClearExsistingObjects ();
 		GeneratePlayers ();
 		GenerateCards ();
@@ -160,7 +253,7 @@ public class ManagerView : MonoBehaviour {
 				GameObject G = (GameObject)Instantiate (m_card_prefab);
 				G.transform.SetParent (m_cards_holder);
 				G.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
-				G.GetComponent<RectTransform> ().localPosition = new Vector3 (i * 128 + i * CARD_X_SPACE, j * 128 + j * CARD_Y_SPACE, 0);
+				G.GetComponent<RectTransform> ().localPosition = new Vector3 (i * CARD_WIDTH + i * CARD_X_SPACE, j * CARD_WIDTH + j * CARD_Y_SPACE, 0);
 
 				CardView cv = G.GetComponent<CardView> ();
 
@@ -177,13 +270,13 @@ public class ManagerView : MonoBehaviour {
 		List<int>	deck = new List<int> ();
 		List<int>	aux_deck = new List<int> ();
 
-		for (i = 0; i < m_cards_images.Length; i++) {
+		for (i = 0; i < m_cards_images.Length-3; i++) {//we do the -2 to not add the specials by chance
 			potential_cards.Add (i);
 		}
 
 		for (i = 0; i < total_cards_on_table/m_cards_to_match; i++) {
 
-			int picked_index = Random.Range (0, potential_cards.Count);
+			int picked_index = UnityEngine.Random.Range (0, potential_cards.Count);
 
 			for (j = 0; j < m_cards_to_match; j++) {
 				deck.Add (potential_cards[picked_index]);
@@ -194,7 +287,7 @@ public class ManagerView : MonoBehaviour {
 
 		for (i = 0; i < total_cards_on_table; i++) {
 
-			int temp = Random.Range(0,deck.Count);
+			int temp = UnityEngine.Random.Range(0,deck.Count);
 
 			aux_deck.Add(deck[temp]);
 
@@ -202,9 +295,51 @@ public class ManagerView : MonoBehaviour {
 
 		}
 
+		if (m_cards_to_match == 2) {
+
+			int temp_index = UnityEngine.Random.Range(0,aux_deck.Count);
+			int temp_value = aux_deck [temp_index];
+
+			List<int> special = new List<int> ();
+
+			for (int k=0;k<aux_deck.Count;k++)
+			{
+				if (aux_deck [k] == temp_value)
+					special.Add (k);
+			}
+
+			if (UnityEngine.Random.Range (0, 1) > .5f) {
+				aux_deck [special [0]] = GameController.JOKER;
+				aux_deck [special [1]] = GameController.SHOW_ALL;
+			} else {
+				aux_deck [special [1]] = GameController.JOKER;
+				aux_deck [special [0]] = GameController.SHOW_ALL;
+			}
+		} else if (m_cards_to_match == 3) 
+		{
+			int temp_index = UnityEngine.Random.Range(0,aux_deck.Count);
+			int temp_value = aux_deck [temp_index];
+
+			List<int> special = new List<int> ();
+
+			for (int k=0;k<aux_deck.Count;k++)
+			{
+				if (aux_deck [k] == temp_value)
+					special.Add (k);
+			}
+
+			if (UnityEngine.Random.Range (0, 1) > .5f) {
+				aux_deck [special [0]] = GameController.JOKER;
+				aux_deck [special [1]] = GameController.SHOW_ALL;
+			} else {
+				aux_deck [special [1]] = GameController.JOKER;
+				aux_deck [special [0]] = GameController.SHOW_ALL;
+			}
+
+			aux_deck [special [2]] = GameController.POINTS;
+		} 
 		for (i = 0; i < aux_deck.Count; i++) {
 			
-
 			m_card_views_arr[i].SetCard(aux_deck[i],i);
 
 		}
@@ -217,6 +352,8 @@ public class ManagerView : MonoBehaviour {
 	{
 		if (m_num_players == 2) {
 
+			int human_used = 1;
+
 			//in this case we make a north south
 			GameObject new_player = (GameObject)Instantiate(m_player_prefab);
 
@@ -224,7 +361,16 @@ public class ManagerView : MonoBehaviour {
 			new_player.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.South];
 			PlayerView pv = new_player.GetComponent<PlayerView>();
-			pv.SetPlayer ((int)Player_Postions.South,null);
+
+			Bot bot0 = new Bot ();
+			bot0.SetBot (m_rows * m_columns, BotLevel.lame);
+
+			if (human_used <= m_num_human_players) {
+				bot0 = null;
+				human_used++;
+			}
+
+			pv.SetPlayer ((int)Player_Postions.South,bot0);
 			m_players_views.Add (pv);
 
 			GameObject new_player2 = (GameObject)Instantiate(m_player_prefab);
@@ -233,8 +379,15 @@ public class ManagerView : MonoBehaviour {
 			new_player2.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player2.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.North];
 			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
+
 			Bot bot = new Bot ();
-			bot.SetBot (m_rows * m_columns, 0.75f);
+			bot.SetBot (m_rows * m_columns, BotLevel.medium);
+
+			if (human_used <= m_num_human_players) {
+				bot = null;
+				human_used++;
+			}
+
 			pv2.SetPlayer ((int)Player_Postions.North,bot);
 			m_players_views.Add (pv2);
 
@@ -242,13 +395,24 @@ public class ManagerView : MonoBehaviour {
 		} else if (m_num_players == 3) {
 			//make south and east west
 			//in this case we make a north south
+
+			int human_used = 1;
 			GameObject new_player = (GameObject)Instantiate(m_player_prefab);
 
 			new_player.transform.SetParent(m_players_holder);
 			new_player.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.South];
 			PlayerView pv = new_player.GetComponent<PlayerView>();
-			pv.SetPlayer ((int)Player_Postions.South,null);
+
+			Bot bot = new Bot ();
+			bot.SetBot (m_rows * m_columns, BotLevel.medium);
+
+			if (human_used <= m_num_human_players) {
+				bot = null;
+				human_used++;
+			}
+
+			pv.SetPlayer ((int)Player_Postions.South,bot);
 			m_players_views.Add (pv);
 
 			GameObject new_player2 = (GameObject)Instantiate(m_player_prefab);
@@ -257,8 +421,17 @@ public class ManagerView : MonoBehaviour {
 			new_player2.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player2.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.West];
 			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
+
 			Bot bot2 = new Bot ();
-			bot2.SetBot (m_rows * m_columns, 0.75f);
+			bot2.SetBot (m_rows * m_columns, BotLevel.medium);
+
+			bot2.SetBot (m_rows * m_columns, BotLevel.medium);
+
+			if (human_used <=m_num_human_players) {
+				bot2 = null;
+				human_used++;
+			}
+
 			pv2.SetPlayer ((int)Player_Postions.West,bot2);
 			m_players_views.Add (pv2);
 
@@ -268,13 +441,23 @@ public class ManagerView : MonoBehaviour {
 			new_player3.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player3.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.East];
 			PlayerView pv3 = new_player3.GetComponent<PlayerView>();
+
+
 			Bot bot3 = new Bot ();
-			bot3.SetBot (m_rows * m_columns, 0.75f);
+			bot3.SetBot (m_rows * m_columns, BotLevel.medium);
+
+			if (human_used <=m_num_human_players) {
+				bot3 = null;
+				human_used++;
+			}
+
 			pv3.SetPlayer ((int)Player_Postions.East,bot3);
 			m_players_views.Add (pv3);
 
 
 		} else if (m_num_players == 4) {
+
+			int human_used = 1;
 
 			GameObject new_player = (GameObject)Instantiate(m_player_prefab);
 
@@ -282,7 +465,16 @@ public class ManagerView : MonoBehaviour {
 			new_player.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.South];
 			PlayerView pv = new_player.GetComponent<PlayerView>();
-			pv.SetPlayer ((int)Player_Postions.South,null);
+
+			Bot bot0 = new Bot ();
+			bot0.SetBot (m_rows * m_columns, BotLevel.lame);
+
+			if (human_used <=m_num_human_players) {
+				bot0 = null;
+				human_used++;
+			}
+
+			pv.SetPlayer ((int)Player_Postions.South,bot0);
 			m_players_views.Add (pv);
 
 			GameObject new_player2 = (GameObject)Instantiate(m_player_prefab);
@@ -291,8 +483,15 @@ public class ManagerView : MonoBehaviour {
 			new_player2.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player2.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.West];
 			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
+
 			Bot bot2 = new Bot ();
-			bot2.SetBot (m_rows * m_columns, 0.75f);
+			bot2.SetBot (m_rows * m_columns, BotLevel.smart);
+
+			if (human_used <=m_num_human_players) {
+				bot2 = null;
+				human_used++;
+			}
+
 			pv2.SetPlayer ((int)Player_Postions.West,bot2);
 			m_players_views.Add (pv2);
 
@@ -302,8 +501,16 @@ public class ManagerView : MonoBehaviour {
 			new_player3.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player3.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.North];
 			PlayerView pv3 = new_player3.GetComponent<PlayerView>();
+
+
 			Bot bot3 = new Bot ();
-			bot3.SetBot (m_rows * m_columns, 0.75f);
+			bot3.SetBot (m_rows * m_columns,BotLevel.medium);
+
+			if (human_used <=m_num_human_players) {
+				bot3 = null;
+				human_used++;
+			}
+
 			pv3.SetPlayer ((int)Player_Postions.North,bot3);
 			m_players_views.Add (pv3);
 
@@ -313,8 +520,15 @@ public class ManagerView : MonoBehaviour {
 			new_player4.GetComponent<RectTransform> ().localScale = new Vector3 (1f, 1f, 1f);
 			new_player4.GetComponent<RectTransform> ().localPosition = m_player_pos [(int)Player_Postions.East];
 			PlayerView pv4 = new_player4.GetComponent<PlayerView>();
+
+
 			Bot bot4 = new Bot ();
-			bot4.SetBot (m_rows * m_columns, 0.75f);
+			bot4.SetBot (m_rows * m_columns, BotLevel.retard);
+			if (human_used <=m_num_human_players) {
+				bot4 = null;
+				human_used++;
+			}
+
 			pv4.SetPlayer ((int)Player_Postions.East,bot4);
 			m_players_views.Add (pv4);
 
@@ -370,6 +584,12 @@ public class ManagerView : MonoBehaviour {
 	public int Num_of_matches_needed {
 		get {
 			return m_num_of_matches_needed;
+		}
+	}
+
+	public List<BotMemory> Bots {
+		get {
+			return m_bots;
 		}
 	}
 }

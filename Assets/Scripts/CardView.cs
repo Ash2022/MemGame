@@ -13,7 +13,7 @@ public class CardView : MonoBehaviour {
 	int 						m_row;
 	int							m_col;
 	[SerializeField]Text		m_row_ol_indicator=null;
-
+	[SerializeField]GameObject		m_highlight=null;
 
 	public void SetCard(int image_index,int pos_index)
 	{
@@ -22,6 +22,11 @@ public class CardView : MonoBehaviour {
 		m_row_ol_indicator.text = m_pos_index.ToString();
 
 
+	}
+
+	public void HighLight(bool show)
+	{
+		m_highlight.SetActive (show);
 	}
 
 	public void ShowCard(bool front)
