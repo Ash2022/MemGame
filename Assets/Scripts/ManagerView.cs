@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using TMPro;
+
 
 public class ManagerView : MonoBehaviour {
 
@@ -27,7 +29,7 @@ public class ManagerView : MonoBehaviour {
 	[SerializeField]Sprite[]		m_avatars_images=null;
 
 	public const	int				PLAYER_X_OFFSET = 250;
-	public const	int				PLAYER_Y_OFFSET = 750;
+	public const	int				PLAYER_Y_OFFSET = 800;
 
 	public const	int				CARD_X_SPACE = 10;
 	public const	int				CARD_Y_SPACE = 10;
@@ -174,10 +176,10 @@ public class ManagerView : MonoBehaviour {
 	{
 		GenerateBots ();
 
-		m_player_pos [(int)Player_Postions.South] = new Vector3 (-PLAYER_X_OFFSET, -PLAYER_Y_OFFSET, 0);
+		m_player_pos [(int)Player_Postions.South] = new Vector3 (-PLAYER_X_OFFSET, -PLAYER_Y_OFFSET+120f, 0);
 		m_player_pos [(int)Player_Postions.West] = new Vector3 (-PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 0);
 		m_player_pos [(int)Player_Postions.North] = new Vector3 (PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 0);
-		m_player_pos [(int)Player_Postions.East] = new Vector3 (PLAYER_X_OFFSET, -PLAYER_Y_OFFSET, 0);
+		m_player_pos [(int)Player_Postions.East] = new Vector3 (PLAYER_X_OFFSET, -PLAYER_Y_OFFSET+120f, 0);
 
 		m_table_width = m_table.rect.width;
 		m_table_height = m_table.rect.height;
@@ -194,6 +196,7 @@ public class ManagerView : MonoBehaviour {
 	public void ShowSelectionGui()
 	{
 		m_selection_gui.SetActive (true);
+		m_selection_gui.transform.FindChild ("Text").GetComponent<TMP_Text> ().text = DateTime.Now.ToString ();
 	}
 
 	public void StartButtonClicked()

@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 public class PlayerView : MonoBehaviour {
 
-	[SerializeField]Image	m_bg_image=null;
-	int						m_player_image_index;
-	[SerializeField]Image	m_timer=null;
-	Bot 					m_bot;
-	int						m_score;
-	int						m_multi;
-	[SerializeField]Text	m_score_text=null;
-	[SerializeField]Text	m_bot_level_text=null;
+	[SerializeField]Image		m_bg_image=null;
+	int							m_player_image_index;
+	[SerializeField]Image		m_timer=null;
+	Bot 						m_bot;
+	int							m_score;
+	int							m_multi;
+	[SerializeField]Text		m_score_text=null;
+	[SerializeField]Text		m_bot_level_text=null;
 
 
 	public void SetPlayer(int index,Bot bot, int score=0)
@@ -26,7 +27,7 @@ public class PlayerView : MonoBehaviour {
 	private void SetDataDisplay()
 	{
 		m_bg_image.sprite = ManagerView.Instance.Avatars_images [m_player_image_index];
-		m_score_text.text = "Score: "+ m_score;
+		m_score_text.text = m_score.ToString();
 
 		if (m_bot != null)
 			m_bot_level_text.text = Bot.Bot_level.ToString ();
@@ -59,7 +60,7 @@ public class PlayerView : MonoBehaviour {
 		}
 		set {
 			m_score = value;
-			m_score_text.text = "Score: "+ m_score;
+			m_score_text.text = m_score.ToString();
 		}
 	}
 
