@@ -47,6 +47,8 @@ public class ManagerView : MonoBehaviour {
 	[SerializeField]bool			m_winner_plays_on=true;
 	[SerializeField]int				m_num_human_players=1;
 
+	[SerializeField]bool			m_show_bot_debug=false;
+
 	int								m_num_of_matches_needed;
 
 
@@ -593,6 +595,12 @@ public class ManagerView : MonoBehaviour {
 	public List<BotMemory> Bots {
 		get {
 			return m_bots;
+		}
+	}
+
+	public bool Show_bot_debug {
+		get {
+			return m_show_bot_debug;
 		}
 	}
 }

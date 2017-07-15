@@ -21,10 +21,10 @@ public class GameController : MonoBehaviour {
 	public const int 		UNKNOWN = -1;
 	public const int 		MATCHED = -100;
 
-	public const int 		JOKER = 24;
-	public const int 		SHOW_ALL = 25;
+	public const int 		JOKER = 18;
+	public const int 		SHOW_ALL = 19;
 	public const int 		SHUFFLE = 27;
-	public const int 		POINTS = 26;	
+	public const int 		POINTS = 20;	
 
 	List<int> 		m_human_picked_cards_indexes = new List<int> ();
 
@@ -156,7 +156,8 @@ public class GameController : MonoBehaviour {
 
 		player_view.Timer.fillAmount = 1;
 		player_view.ShowHideTimer (true);
-		player_view.Bot.HighlightAllKnownCards(true);
+		if(ManagerView.Instance.Show_bot_debug)
+			player_view.Bot.HighlightAllKnownCards(true);
 		// Wait time:
 		// For bid: Normal distribution with mean of 4 and the stddev of 1
 		// For turn: Triangular distribution between 0 and 3 with most frequent value of 0.5
@@ -303,7 +304,7 @@ public class GameController : MonoBehaviour {
 					if (num_special == 1) {//means we have 2 value cards - need to remove one of them.
 						
 						for (int i = 0; i < picked_cards_indexes.Count; i++) {
-							if (ManagerView.Instance.Card_views_arr [picked_cards_indexes [i]].Image_index < 24) 
+							if (ManagerView.Instance.Card_views_arr [picked_cards_indexes [i]].Image_index < 18) 
 							{
 								card_to_close = picked_cards_indexes [i];
 								picked_cards_indexes.RemoveAt (i);
@@ -332,8 +333,13 @@ public class GameController : MonoBehaviour {
 				for (int i = 0; i < ManagerView.Instance.Card_views_arr.Length; i++) {
 
 					if (ManagerView.Instance.Card_views_arr [i].Image_index == curr_matched_index_cards_view_value)
-					if (i != curr_matched_index_value)
+					if (i != curr_matched_index_value) {
 						picked_cards_indexes.Add (i);
+
+						if (ManagerView.Instance.Card_views_arr [i].Button.interactable)
+							ManagerView.Instance.Card_views_arr [i].ShowCard (true);
+
+					}
 				}
 
 
@@ -345,7 +351,7 @@ public class GameController : MonoBehaviour {
 				for (int i = 0; i < picked_cards_indexes.Count; i++) {
 					ManagerView.Instance.Card_views_arr [picked_cards_indexes [i]].Pos_index = MATCHED;
 
-					ManagerView.Instance.Card_views_arr [picked_cards_indexes [i]].gameObject.SetActive (false);
+					ManagerView.Instance.Card_views_arr [picked_cards_indexes [i]].CardMatchedAnim ();
 
 					for (int k = 0; k < ManagerView.Instance.Players_views.Count; k++) {
 						if (ManagerView.Instance.Players_views [k].Bot != null)
