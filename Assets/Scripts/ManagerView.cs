@@ -153,21 +153,62 @@ public class ManagerView : MonoBehaviour {
 	void Update()
 	{
 		if (Input.GetKeyUp (KeyCode.G))
-			StartCoroutine(ShowAllCards());
+			StartCoroutine(ShowAllCards(null,-1));
 	}
 
-	public IEnumerator ShowAllCards()
+	public void AddDataToAllBots(int index,int value)
 	{
-		for (int i = 0; i < m_card_views_arr.Length; i++) {
-			m_card_views_arr [i].ShowCard (true);
-			yield return new WaitForSecondsRealtime (0.03f);
+		for (int k = 0; k < Players_views.Count; k++) {
+			if (Players_views [k].Bot != null)
+				Players_views [k].Bot.AddDataFromOtherPlayerMoves (index, value);
+		}
+	}
+
+
+	public IEnumerator ShowAllCards(List<int> already_opened,int show_all_index=-1)
+	{
+
+		if (show_all_index >= 0) {
+			Card_views_arr [show_all_index].Pos_index = GameController.MATCHED;
+			Card_views_arr [show_all_index].CardMatchedAnim ();
+
+			AddDataToAllBots (show_all_index,GameController.MATCHED);
+
+			yield return new WaitForSecondsRealtime (0.25f);
+			GameController.Instance.ScoreSpecialCurrentMove (GameController.SHOW_ALL);
+			//score the event 
 		}
 
+		for (int i = 0; i < m_card_views_arr.Length; i++) {
+
+			if (m_card_views_arr [i].Button.interactable) {
+				m_card_views_arr [i].ShowCard (true);
+				yield return new WaitForSecondsRealtime (0.03f);
+			}
+		}
+
+		if (show_all_index > 0) {
+			Card_views_arr [show_all_index].Pos_index = GameController.MATCHED;
+			Card_views_arr [show_all_index].gameObject.SetActive (false);
+		}
 		yield return new WaitForSecondsRealtime (0.13f);
 
 		for (int i = 0; i < m_card_views_arr.Length; i++) {
-			m_card_views_arr [i].ShowCard (false);
-			yield return new WaitForSecondsRealtime (0.03f);
+
+			bool in_list = false;
+
+			if (already_opened != null && already_opened.Count != 0) 
+			{
+				for (int j = 0; j < already_opened.Count; j++)
+					if (already_opened [j] == m_card_views_arr [i].Pos_index)
+						in_list = true;
+			} 
+
+			if (!in_list) {
+				m_card_views_arr [i].ShowCard (false);
+				yield return new WaitForSecondsRealtime (0.03f);
+			}
+
 		}
 
 	}
@@ -386,7 +427,7 @@ public class ManagerView : MonoBehaviour {
 			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
 
 			Bot bot = new Bot ();
-			bot.SetBot (m_rows * m_columns, BotLevel.medium);
+			bot.SetBot (m_rows * m_columns, BotLevel.Geniuos);
 
 			if (human_used <= m_num_human_players) {
 				bot = null;
