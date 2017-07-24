@@ -125,7 +125,7 @@ public class Bot
 		//pick one of potential at random
 		int temp = Random.Range (0, m_potential_picks.Count);
 
-		temp = 0;
+		//temp = 0;
 
 		if (m_potential_picks.Count == 0) {
 
@@ -388,7 +388,7 @@ public class Bot
 
 			int curr_mem_value = m_memory.Initial_memory - entry_value * m_memory.Decline_rate;
 
-			if (curr_mem_value < Random.Range (0, 70)) {//bot forgot value
+			if (curr_mem_value < Random.Range (0, m_memory.Forget_value)) {//bot forgot value
 
 				m_cards_remember [i] = 0;
 
@@ -401,10 +401,33 @@ public class Bot
 		for (int i = 0; i < num_cards; i++) {
 
 			if (m_cards_remember [i] == 0)
-
-			if(m_cards[i]!=GameController.MATCHED)
-				m_cards [i] = GameController.UNKNOWN;
+				
+			if (m_cards [i] != GameController.MATCHED) 
+			{
+				
+				m_cards [0] = GameController.UNKNOWN;
+			
+			}
 		}
+
+	}
+
+	private int GetKnownValidCardIndex()
+	{
+		List<int>	potentials = new List<int> ();
+
+		for (int i = 0; i < m_cards.Length; i++) {
+
+			if (m_cards [i] != GameController.UNKNOWN && m_cards [i] != GameController.MATCHED)
+				potentials.Add (i);
+		}
+
+		int value = Random.Range (0, potentials.Count);
+
+		if (potentials.Count == 0)
+			return 0;
+		else
+			return potentials [value];
 
 	}
 

@@ -113,11 +113,11 @@ public class ManagerView : MonoBehaviour {
 
 	private void GenerateBots()
 	{
-		m_bots.Add (new BotMemory (100, 0)); // never forget
-		m_bots.Add (new BotMemory (90, 1));
-		m_bots.Add (new BotMemory (70, 2));
-		m_bots.Add (new BotMemory (60, 2)); 
-		m_bots.Add (new BotMemory (50, 3)); // never remember
+		m_bots.Add (new BotMemory (100, 0,70)); // never forget
+		m_bots.Add (new BotMemory (90, 1,70));
+		m_bots.Add (new BotMemory (70, 2,70));
+		m_bots.Add (new BotMemory (60, 2,70)); 
+		m_bots.Add (new BotMemory (50, 3,70)); // never remember
 
 	}
 
@@ -187,8 +187,7 @@ public class ManagerView : MonoBehaviour {
 			}
 		}
 
-		if (show_all_index > 0) {
-			Card_views_arr [show_all_index].Pos_index = GameController.MATCHED;
+		if (show_all_index >= 0) {
 			Card_views_arr [show_all_index].gameObject.SetActive (false);
 		}
 		yield return new WaitForSecondsRealtime (0.13f);
@@ -213,7 +212,67 @@ public class ManagerView : MonoBehaviour {
 
 	}
 
+	public IEnumerator Shuffle(List<int> already_opened,int shuffle_index=-1)
+	{
 
+		if (shuffle_index >= 0) {
+			Card_views_arr [shuffle_index].Pos_index = GameController.MATCHED;
+			Card_views_arr [shuffle_index].CardMatchedAnim ();
+
+			AddDataToAllBots (shuffle_index,GameController.MATCHED);
+
+			yield return new WaitForSecondsRealtime (0.25f);
+			GameController.Instance.ScoreSpecialCurrentMove (GameController.SHUFFLE);
+			//score the event 
+		}
+
+
+		// find all the cards that are still visible 
+		List<int> valid_cards_index = new List<int> ();
+
+		for (int i = 0; i < m_card_views_arr.Length; i++) {
+
+			if (m_card_views_arr [i].Image_index != GameController.MATCHED)
+				valid_cards_index.Add (i);
+		}
+
+		List<int> listA = new List<int> ();
+		List<int> listB = new List<int> ();
+
+		//if the number divides by 2 go over the whole list - if not divide - go over the list -1  - and put each card into a different one of 2 lists
+		if (valid_cards_index.Count % 2 != 0)
+			valid_cards_index.RemoveAt (valid_cards_index.Count - 1);
+
+		for (int i = 0; i < valid_cards_index.Count; i++)
+			if (i % 2 == 0)
+				listA.Add (i);
+			else
+				listB.Add (i);
+		
+		//go over both lists and swap cards position and update the data - and erase bot memory of those data
+
+		for (int i = 0; i < listA.Count; i++) 
+		{
+			Vector3 newposA = m_card_views_arr [listB [i]].gameObject.GetComponent<RectTransform> ().localPosition;
+			Vector3 newposB = m_card_views_arr [listA [i]].gameObject.GetComponent<RectTransform> ().localPosition;
+
+			iTween.MoveTo(m_card_views_arr[listA[i]].gameObject, iTween.Hash("position",newposA,"islocal",true, "easeType", iTween.EaseType.easeInCirc, "time", 1));
+			iTween.MoveTo(m_card_views_arr[listB[i]].gameObject, iTween.Hash("position",newposB,"islocal",true, "easeType", iTween.EaseType.easeInCirc, "time", 1));
+
+			//int temp = m_card_views_arr [listA [i]].Pos_index;
+			//m_card_views_arr [listA [i]].Pos_index = m_card_views_arr [listB [i]].Pos_index;
+			//m_card_views_arr [listB [i]].Pos_index = temp;
+
+		}
+
+		if (shuffle_index >= 0) {
+			Card_views_arr [shuffle_index].gameObject.SetActive (false);
+		}
+		yield return new WaitForSecondsRealtime (0.13f);
+
+
+
+	}
 
 	private void Init()
 	{
@@ -355,10 +414,10 @@ public class ManagerView : MonoBehaviour {
 			}
 
 			if (UnityEngine.Random.Range (0, 1) > .5f) {
-				aux_deck [special [0]] = GameController.JOKER;
+				aux_deck [special [0]] = GameController.SHUFFLE;
 				aux_deck [special [1]] = GameController.SHOW_ALL;
 			} else {
-				aux_deck [special [1]] = GameController.JOKER;
+				aux_deck [special [1]] = GameController.SHUFFLE;
 				aux_deck [special [0]] = GameController.SHOW_ALL;
 			}
 		} else if (m_cards_to_match == 3) 
@@ -382,7 +441,7 @@ public class ManagerView : MonoBehaviour {
 				aux_deck [special [0]] = GameController.SHOW_ALL;
 			}
 
-			aux_deck [special [2]] = GameController.POINTS;
+			aux_deck [special [2]] = GameController.SHUFFLE;
 		} 
 		for (i = 0; i < aux_deck.Count; i++) {
 			
@@ -427,7 +486,7 @@ public class ManagerView : MonoBehaviour {
 			PlayerView pv2 = new_player2.GetComponent<PlayerView>();
 
 			Bot bot = new Bot ();
-			bot.SetBot (m_rows * m_columns, BotLevel.Geniuos);
+			bot.SetBot (m_rows * m_columns, BotLevel.medium);
 
 			if (human_used <= m_num_human_players) {
 				bot = null;

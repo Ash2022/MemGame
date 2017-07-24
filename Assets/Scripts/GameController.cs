@@ -25,8 +25,8 @@ public class GameController : MonoBehaviour
 
 	public const int JOKER = 18;
 	public const int SHOW_ALL = 19;
-	public const int SHUFFLE = 27;
-	public const int POINTS = 20;
+	public const int SHUFFLE = 20;
+	public const int POINTS = 27;
 
 	List<int> m_human_picked_cards_indexes = new List<int> ();
 
@@ -65,9 +65,7 @@ public class GameController : MonoBehaviour
 			Debug.Log ("Winner plays on");
 		else
 			m_curr_player++;
-
-		//Debug.Log("Player " + m_curr_player + " Turn");
-
+		
 		if (m_curr_player == ManagerView.Instance.Num_players)
 			m_curr_player = 0;
 
@@ -129,6 +127,24 @@ public class GameController : MonoBehaviour
 			StartCoroutine (ManagerView.Instance.ShowAllCards (m_human_picked_cards_indexes, card_pos));
 
 			special_picked = SHOW_ALL;
+			//give show all score
+		}
+
+		if (ManagerView.Instance.Card_views_arr [card_pos].Image_index == SHUFFLE) {
+
+			//need to go over all the cards - close any open cards except for the shuffle 
+			for (int i = 0; i < m_human_picked_cards_indexes.Count; i++)
+				if (ManagerView.Instance.Card_views_arr [m_human_picked_cards_indexes[i]].Image_index != GameController.SHUFFLE) {
+					ManagerView.Instance.Card_views_arr [m_human_picked_cards_indexes[i]].ShowCard (false);
+				}
+
+			m_human_picked_cards_indexes.Clear ();
+			m_num_picked_cards=0;
+
+			StartCoroutine (ManagerView.Instance.Shuffle (m_human_picked_cards_indexes, card_pos));
+			special_picked = SHUFFLE;
+
+
 			//give show all score
 		}
 
@@ -209,7 +225,7 @@ public class GameController : MonoBehaviour
 			{
 				StartCoroutine (ManagerView.Instance.ShowAllCards (picked_cards_indexes, curr_pick));
 
-				yield return new WaitForSecondsRealtime (1.25f);
+				yield return new WaitForSecondsRealtime (2.25f);
 			} 
 			else if (curr_pick_value == POINTS)
 			{
@@ -223,13 +239,17 @@ public class GameController : MonoBehaviour
 			} 
 			else if (curr_pick_value == SHUFFLE)
 			{
-				ManagerView.Instance.Card_views_arr [curr_pick].Pos_index = GameController.MATCHED;
-				ManagerView.Instance.Card_views_arr [curr_pick].CardMatchedAnim ();
+				for (int i = 0; i < picked_cards_indexes.Count; i++)
+					if (ManagerView.Instance.Card_views_arr [picked_cards_indexes[i]].Image_index != GameController.SHUFFLE) {
+						ManagerView.Instance.Card_views_arr [picked_cards_indexes[i]].ShowCard (false);
+					}
 
-				ManagerView.Instance.AddDataToAllBots (curr_pick,GameController.MATCHED);
+				picked_cards_indexes.Clear ();
+				already_picked_cards=0;
 
-				yield return new WaitForSecondsRealtime (0.25f);
-				GameController.Instance.ScoreSpecialCurrentMove (GameController.SHOW_ALL);
+				StartCoroutine (ManagerView.Instance.Shuffle (picked_cards_indexes, curr_pick));
+				yield return new WaitForSecondsRealtime (1.25f);
+
 			}
 			else 
 			{
@@ -308,7 +328,8 @@ public class GameController : MonoBehaviour
 
 			int curr_card_value = ManagerView.Instance.Card_views_arr [picked_cards_indexes [i]].Image_index;
 
-			if (curr_card_value != value_to_match && curr_card_value != JOKER) {
+			if (curr_card_value != value_to_match && curr_card_value != JOKER) 
+			{
 				match = false;
 			}
 
@@ -333,7 +354,7 @@ public class GameController : MonoBehaviour
 
 				for (int i = 0; i < picked_cards_indexes.Count; i++)
 				{
-					if (picked_cards_indexes [i] != JOKER) 
+					if (ManagerView.Instance.Card_views_arr[picked_cards_indexes [i]].Image_index != JOKER) 
 					{
 						other_card_to_match_value_index = picked_cards_indexes [i];
 						other_card_to_match_value = ManagerView.Instance.Card_views_arr [other_card_to_match_value_index].Image_index;
