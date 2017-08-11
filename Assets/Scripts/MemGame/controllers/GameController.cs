@@ -37,7 +37,7 @@ namespace MemGame.controllers
 		public const int SHUFFLE = 20;
 		public const int POINTS = 27;
 
-		List<int> m_human_picked_cards_indexes = new List<int> ();
+		List<Card> m_human_picked_cards_indexes = new List<Card> ();
 
 		Table 			m_table;
 		TableView		m_table_view;
@@ -133,31 +133,31 @@ namespace MemGame.controllers
 
 		}
 
-		public void HumanPickedCard (int card_pos)
+		public void HumanPickedCard (Card card)
 		{
-			Debug.Log ("Human picked card index pos: " + card_pos);
+			Debug.Log ("Human picked card index pos: " + card.Image_index);
 
 			int special_picked = 0;
 
-			if (m_table.Cards[card_pos].Image_index == SHOW_ALL) {
-				StartCoroutine (ShowAllCards (m_human_picked_cards_indexes, card_pos));
+			if (card.Image_index == SHOW_ALL) {
+				StartCoroutine (ShowAllCards (m_human_picked_cards_indexes));
 
 				special_picked = SHOW_ALL;
 				//give show all score
 			}
 
-			if (m_table.Cards[card_pos].Image_index == SHUFFLE) {
+			if (card.Image_index == SHUFFLE) {
 
 				//need to go over all the cards - close any open cards except for the shuffle 
 				for (int i = 0; i < m_human_picked_cards_indexes.Count; i++)
-					if (m_table.Cards[m_human_picked_cards_indexes [i]].Image_index != GameController.SHUFFLE) {
-						m_table_view.Card_views[m_human_picked_cards_indexes [i]].ShowCard (false);
+					if (m_human_picked_cards_indexes [i].Image_index != GameController.SHUFFLE) {
+						m_human_picked_cards_indexes [i].Open = false;
 					}
 
 				m_human_picked_cards_indexes.Clear ();
 				m_num_picked_cards = 0;
 
-				StartCoroutine (Shuffle (m_human_picked_cards_indexes, card_pos));
+				StartCoroutine (Shuffle (m_human_picked_cards_indexes));
 				special_picked = SHUFFLE;
 
 
@@ -166,7 +166,7 @@ namespace MemGame.controllers
 
 			if (special_picked == 0) {
 				m_num_picked_cards++;
-				m_human_picked_cards_indexes.Add (card_pos);
+				m_human_picked_cards_indexes.Add (card);
 			}
 
 			if (m_num_picked_cards == ManagerView.Instance.Cards_to_match) {
@@ -224,7 +224,7 @@ namespace MemGame.controllers
 
 			player_view.ShowHideTimer (false);
 
-			List<int> picked_cards_indexes = new List<int> ();
+			List<Card> picked_cards_indexes = new List<Card> ();
 
 			int already_picked_cards = 0;
 
@@ -241,11 +241,11 @@ namespace MemGame.controllers
 				}
 
 
-				int curr_pick = player_view.Bot.PickCards (num_cards_to_pick, already_picked_cards);
+				Card curr_pick = player_view.Bot.PickCards (num_cards_to_pick, already_picked_cards);
 
-				int curr_pick_value = m_table_view.Card_views[curr_pick].Image_index;
+				int curr_pick_value = curr_pick.Image_index;
 
-				m_table_view.Card_views [curr_pick].ShowCard (true);
+				curr_pick.Open = true;
 				yield return new WaitForSecondsRealtime (CARDS_PICK_DELAY_TIME);
 
 				if (curr_pick_value == SHOW_ALL) {
@@ -254,17 +254,17 @@ namespace MemGame.controllers
 
 					yield return new WaitForSecondsRealtime (2.5f);
 				} else if (curr_pick_value == POINTS) {
-					m_table_view.Card_views [curr_pick].Pos_index = GameController.MATCHED;
-					m_table_view.Card_views [curr_pick].CardMatchedAnim ();
+					curr_pick.Matched = true;
 
-					AddDataToAllBots (curr_pick, GameController.MATCHED);
+
+					AddDataToAllBots (curr_pick);
 
 					yield return new WaitForSecondsRealtime (0.25f);
 					GameController.Instance.ScoreSpecialCurrentMove (GameController.SHOW_ALL);
 				} else if (curr_pick_value == SHUFFLE) {
 					for (int i = 0; i < picked_cards_indexes.Count; i++)
-						if (m_table_view.Card_views [picked_cards_indexes [i]].Image_index != GameController.SHUFFLE) {
-							m_table_view.Card_views [picked_cards_indexes [i]].ShowCard (false);
+						if (picked_cards_indexes [i].Image_index != GameController.SHUFFLE) {
+							picked_cards_indexes [i].Open = false;
 						}
 
 					picked_cards_indexes.Clear ();
@@ -340,25 +340,25 @@ namespace MemGame.controllers
 
 
 
-		private bool CheckCurrentSelectionMatch (List<int> picked_cards_indexes)
+		private bool CheckCurrentSelectionMatch (List<Card> picked_cards_indexes)
 		{
 			bool match = true;
 			bool joker = false;
 
 
-			int value_to_match = m_table_view.Card_views [picked_cards_indexes [0]].Image_index;
+			int value_to_match = picked_cards_indexes [0].Image_index;
 
 			if (value_to_match == JOKER) {//if the first card is joker - need to start with second card
 				joker = true;
 
 
-				value_to_match = m_table_view.Card_views [picked_cards_indexes [1]].Image_index;
+				value_to_match = picked_cards_indexes [1].Image_index;
 			} 
 
 
 			for (int i = 0; i < picked_cards_indexes.Count; i++) {
 
-				int curr_card_value = m_table_view.Card_views [picked_cards_indexes [i]].Image_index;
+				int curr_card_value = picked_cards_indexes [i].Image_index;
 
 				if (curr_card_value != value_to_match && curr_card_value != JOKER) {
 					match = false;
@@ -377,14 +377,14 @@ namespace MemGame.controllers
 				//i have a match - either pure match or joker 
 				//if joker match - need to find the other card and remove all 3 of them
 				//if no joker - just remove the cards in the match
-
+				/*
 				if (joker) {
 					//find the other card that is complimented by the Joker and add open it
 					int other_card_to_match_value_index = 0;
 					int other_card_to_match_value = 0;
 
 					for (int i = 0; i < picked_cards_indexes.Count; i++) {
-						if (m_table_view.Card_views [picked_cards_indexes [i]].Image_index != JOKER) {
+						if (picked_cards_indexes [i].Image_index != JOKER) {
 							other_card_to_match_value_index = picked_cards_indexes [i];
 							other_card_to_match_value = m_table_view.Card_views [other_card_to_match_value_index].Image_index;
 						}
@@ -401,24 +401,22 @@ namespace MemGame.controllers
 						}
 					}
 
-				}
+				}*/
 
 
 				for (int i = 0; i < picked_cards_indexes.Count; i++) {
-					m_table_view.Card_views [picked_cards_indexes [i]].Pos_index = MATCHED;
+					picked_cards_indexes [i].Matched = true;
 
-					m_table_view.Card_views [picked_cards_indexes [i]].CardMatchedAnim ();
-
-					AddDataToAllBots (picked_cards_indexes [i], MATCHED);
+					AddDataToAllBots (picked_cards_indexes [i]);
 
 				}
 
 			} else {
 				// No Match - Closing Cards and consuming Joker
 				for (int i = 0; i < picked_cards_indexes.Count; i++) {
-					m_table_view.Card_views [picked_cards_indexes [i]].ShowCard (false);
+					picked_cards_indexes [i].Open = false;
 
-					AddDataToAllBots (picked_cards_indexes [i], m_table_view.Card_views [picked_cards_indexes [i]].Image_index);
+					AddDataToAllBots (picked_cards_indexes [i]);
 
 				}
 			}
@@ -426,14 +424,13 @@ namespace MemGame.controllers
 			return(match);
 		}
 
-		public IEnumerator ShowAllCards (List<int> already_opened, int show_all_index = -1)
+		public IEnumerator ShowAllCards (List<Card> already_opened, Card show_all_index=null)
 		{
 
-			if (show_all_index >= 0) {
-				m_table_view.Card_views [show_all_index].Pos_index = GameController.MATCHED;
-				m_table_view.Card_views [show_all_index].CardMatchedAnim ();
+			if (show_all_index != null) {
+				show_all_index.Matched = true;
 
-				AddDataToAllBots (show_all_index, GameController.MATCHED);
+				AddDataToAllBots (show_all_index);
 
 				yield return new WaitForSecondsRealtime (0.25f);
 				GameController.Instance.ScoreSpecialCurrentMove (GameController.SHOW_ALL);
@@ -447,12 +444,9 @@ namespace MemGame.controllers
 					yield return new WaitForSecondsRealtime (0.03f);
 				}
 			}
-
-			if (show_all_index >= 0) {
-				m_table_view.Card_views [show_all_index].gameObject.SetActive (false);
-			}
+				
 			yield return new WaitForSecondsRealtime (0.13f);
-
+		/*
 			for (int i = 0; i < m_table_view.Card_views.Length; i++) {
 
 				bool in_list = false;
@@ -468,18 +462,17 @@ namespace MemGame.controllers
 					yield return new WaitForSecondsRealtime (0.03f);
 				}
 
-			}
+			}*/
 
 		}
 
-		public IEnumerator Shuffle (List<int> already_opened, int shuffle_index = -1)
+		public IEnumerator Shuffle (List<Card> already_opened, Card shuffle_index=null)
 		{
 
-			if (shuffle_index >= 0) {
-				m_table_view.Card_views [shuffle_index].Pos_index = GameController.MATCHED;
-				m_table_view.Card_views [shuffle_index].CardMatchedAnim ();
-
-				AddDataToAllBots (shuffle_index, GameController.MATCHED);
+			if (shuffle_index != null) {
+				shuffle_index.Matched = true;
+			
+				AddDataToAllBots (shuffle_index);
 
 				yield return new WaitForSecondsRealtime (0.25f);
 				GameController.Instance.ScoreSpecialCurrentMove (GameController.SHUFFLE);
@@ -524,19 +517,18 @@ namespace MemGame.controllers
 
 			}
 
-			if (shuffle_index >= 0) {
-				m_table_view.Card_views [shuffle_index].gameObject.SetActive (false);
-			}
+
+
 			yield return new WaitForSecondsRealtime (0.13f);
 
 
 
 		}
-		public void AddDataToAllBots (int index, int value)
+		public void AddDataToAllBots (Card card)
 		{
 			for (int k = 0; k <m_table_view.Players_views.Count; k++) {
 				if (m_table_view.Players_views [k].Bot != null)
-					m_table_view.Players_views [k].Bot.AddDataFromOtherPlayerMoves (index, value);
+					m_table_view.Players_views [k].Bot.AddDataFromOtherPlayerMoves (card);
 			}
 		}
 

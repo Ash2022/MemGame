@@ -28,10 +28,12 @@ namespace MemGame.views
 		{
 			m_card_model = card;
 
-			m_row_ol_indicator.text = m_card_model.Table_pos_index.ToString ();
+			//m_row_ol_indicator.text = m_card_model.Table_pos_index.ToString ();
 			m_canvas_group = GetComponent<CanvasGroup> ();
 			//ShowCard (true);
 
+			m_card_model.OnCardOpen += ShowCard;
+			m_card_model.OnCardMatched += CardMatchedAnim;
 		}
 
 		public void HighLight (bool show, bool wrong)
@@ -72,7 +74,7 @@ namespace MemGame.views
 		{
 
 			if (GameController.Instance.Human_can_play) {
-				Debug.Log ("Card Clicked Pos " + m_card_model.Table_pos_index);
+				Debug.Log ("Card Clicked Pos " + m_card_model.Image_index);
 				m_button.interactable = false;
 				ShowCard (true);
 				GameController.Instance.HumanPickedCard (m_card_model.Table_pos_index);

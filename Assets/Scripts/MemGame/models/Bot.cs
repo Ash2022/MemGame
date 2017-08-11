@@ -143,7 +143,7 @@ namespace MemGame.models
 
 		}
 
-		public int PickCards (int total_to_pick, int curr_pick_index)
+		public Card PickCards (int total_to_pick, int curr_pick_index)
 		{
 		
 			if (curr_pick_index == 0) {
@@ -166,7 +166,7 @@ namespace MemGame.models
 					m_turns_match.Add (value_to_return);
 
 				}
-				GameController.Instance.AddDataToAllBots (value_to_return, ManagerView.Instance.Table_view.Card_views [value_to_return].Image_index);
+				GameController.Instance.AddDataToAllBots (value_to_return);
 				return value_to_return;
 			
 			} else {
@@ -253,15 +253,15 @@ namespace MemGame.models
 
 
 
-		public void AddDataFromOtherPlayerMoves (int pick_index, int value)
-		{
+		public void AddDataFromOtherPlayerMoves (Card card)
+		{/*
 			m_cards [pick_index] = value;
 			m_cards_remember [pick_index] = 1;
 
 			m_discovery_time [pick_index] = m_discovery_index;
 			m_discovery_index++;
 
-			UpdateRememberCards ();
+			UpdateRememberCards ();*/
 		}
 
 		private int FindAlreadySeen ()

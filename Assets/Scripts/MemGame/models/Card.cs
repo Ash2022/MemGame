@@ -5,14 +5,17 @@ namespace  MemGame.models
 	public class Card
 	{
 		int		m_image_index;
-		int		m_table_pos_index;
+		bool	m_open=false;
+		bool	m_matched=false;
 
-		public Card (int image_index=0, int pos_index=-1)
+		public Card (int image_index=0)
 		{
 			m_image_index = image_index;
-			m_table_pos_index = pos_index;
+
 		}
 
+		public Action<bool>	OnCardOpen;
+		public Action		OnCardMatched;
 
 		public int Image_index {
 			get {
@@ -23,12 +26,25 @@ namespace  MemGame.models
 			}
 		}
 
-		public int Table_pos_index {
+		public bool Open {
 			get {
-				return m_table_pos_index;
+				return m_open;
 			}
 			set {
-				m_table_pos_index = value;
+				m_open = value;
+				if (OnCardOpen != null)
+					OnCardOpen (m_open);
+			}
+		}
+
+		public bool Matched {
+			get {
+				return m_matched;
+			}
+			set {
+				m_matched = value;
+				if (OnCardMatched != null)
+					OnCardMatched ();
 			}
 		}
 	}

@@ -121,7 +121,7 @@ namespace  MemGame.models
 
 			for (int i = 0; i < aux_deck.Count; i++) {
 
-				aux_deck [i].Table_pos_index = i;
+
 				m_cards [i]= aux_deck [i];
 
 			}
